@@ -1,0 +1,30 @@
+{
+  "name": "virtual-persona",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "signaling": "node signaling-server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run signaling\""
+  },
+  "dependencies": {
+    "@mediapipe/face_mesh": "^0.4.1633559619",
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "next": "14.2.18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "@types/react": "^18.3.14",
+    "@types/react-dom": "^18.3.2",
+    "concurrently": "^9.1.0",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "14.2.18",
+    "typescript": "^5.7.2"
+  }
+}
