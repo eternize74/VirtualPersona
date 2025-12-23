@@ -80,11 +80,34 @@ export default function AvatarRenderer({
         // Head Rotation 적용
         const [pitch, yaw, roll] = params.headRotation;
 
+        // 고개 회전 강도 배수 (더 눈에 띄게)
+        const yawDeg = yaw * 180 / Math.PI;  // 라디안 -> 도
+        const pitchDeg = pitch * 180 / Math.PI;
+        const rollDeg = roll * 180 / Math.PI;
+
         ctx.save();
         ctx.translate(centerX, centerY);
-        ctx.rotate(roll * 0.5); // Roll 적용 (감쇠)
-        ctx.translate(yaw * 30, pitch * 20); // Yaw/Pitch로 위치 이동
+
+        // Roll 적용 (고개 기울이기)
+        ctx.rotate(roll * 0.8);
+
+        // Yaw 적용 (좌우 회전) - 더 큰 이동값
+        const yawOffset = yawDeg * 2.5;  // 좌우 이동량
+        ctx.translate(yawOffset, 0);
+
+        // Pitch 적용 (상하 회전)
+        const pitchOffset = pitchDeg * 1.5;  // 상하 이동량
+        ctx.translate(0, pitchOffset);
+
+        // 좌우 회전 시 약간의 수평 스케일로 원근 효과
+        const perspectiveScale = 1 - Math.abs(yawDeg) / 100;
+        ctx.scale(perspectiveScale, 1);
+
         ctx.translate(-centerX, -centerY);
+
+        // 눈 위치 오프셋 (고개 방향으로 눈동자 이동)
+        const eyeOffsetX = yawDeg * 0.3;
+        const eyeOffsetY = pitchDeg * 0.2;
 
         // 1. 머리카락 (뒤)
         ctx.beginPath();
@@ -130,13 +153,13 @@ export default function AvatarRenderer({
         // 왼쪽 눈동자
         if (eyeOpenLeft > 0.2) {
             ctx.beginPath();
-            ctx.arc(leftEyeX + yaw * 5, eyeY + pitch * 3, 10 * scale * eyeOpenLeft, 0, Math.PI * 2);
+            ctx.arc(leftEyeX + eyeOffsetX, eyeY + eyeOffsetY, 10 * scale * eyeOpenLeft, 0, Math.PI * 2);
             ctx.fillStyle = colors.secondary;
             ctx.fill();
 
             // 눈동자 하이라이트
             ctx.beginPath();
-            ctx.arc(leftEyeX + yaw * 5 - 3 * scale, eyeY + pitch * 3 - 3 * scale, 3 * scale, 0, Math.PI * 2);
+            ctx.arc(leftEyeX + eyeOffsetX - 3 * scale, eyeY + eyeOffsetY - 3 * scale, 3 * scale, 0, Math.PI * 2);
             ctx.fillStyle = '#fff';
             ctx.fill();
         }
@@ -155,12 +178,12 @@ export default function AvatarRenderer({
         // 오른쪽 눈동자
         if (eyeOpenRight > 0.2) {
             ctx.beginPath();
-            ctx.arc(rightEyeX + yaw * 5, eyeY + pitch * 3, 10 * scale * eyeOpenRight, 0, Math.PI * 2);
+            ctx.arc(rightEyeX + eyeOffsetX, eyeY + eyeOffsetY, 10 * scale * eyeOpenRight, 0, Math.PI * 2);
             ctx.fillStyle = colors.secondary;
             ctx.fill();
 
             ctx.beginPath();
-            ctx.arc(rightEyeX + yaw * 5 - 3 * scale, eyeY + pitch * 3 - 3 * scale, 3 * scale, 0, Math.PI * 2);
+            ctx.arc(rightEyeX + eyeOffsetX - 3 * scale, eyeY + eyeOffsetY - 3 * scale, 3 * scale, 0, Math.PI * 2);
             ctx.fillStyle = '#fff';
             ctx.fill();
         }

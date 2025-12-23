@@ -85,8 +85,6 @@
 .subtitle {
     font-size: 1.5rem;
     color: var(--color-text-secondary);
-    animation: fadeIn 0.8s ease 0.2s forwards;
-    opacity: 0;
 }
 
 .highlight {
@@ -112,17 +110,9 @@
     padding: var(--spacing-xl);
     border: 1px solid rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
-    animation: fadeIn 0.5s ease forwards;
-    opacity: 0;
 }
 
-.card:nth-child(1) {
-    animation-delay: 0.3s;
-}
 
-.card:nth-child(2) {
-    animation-delay: 0.4s;
-}
 
 .cardTitle {
     font-size: 1.25rem;
@@ -174,21 +164,9 @@
 .feature {
     text-align: center;
     padding: var(--spacing-lg);
-    animation: fadeIn 0.5s ease forwards;
-    opacity: 0;
 }
 
-.feature:nth-child(1) {
-    animation-delay: 0.5s;
-}
 
-.feature:nth-child(2) {
-    animation-delay: 0.6s;
-}
-
-.feature:nth-child(3) {
-    animation-delay: 0.7s;
-}
 
 .featureIcon {
     font-size: 2.5rem;

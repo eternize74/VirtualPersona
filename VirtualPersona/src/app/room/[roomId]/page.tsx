@@ -65,21 +65,36 @@ export default function RoomPage() {
         signalingUrl: SIGNALING_URL,
     });
 
+    const hasInitializedRef = useRef(false);
+
     /**
-     * @brief 초기화 및 연결
+     * @brief 초기화 및 연결 (한 번만 실행)
      */
     useEffect(() => {
+        if (hasInitializedRef.current) return;
+        hasInitializedRef.current = true;
+
+        console.log('[Room] Initializing...', roomId);
+
         // 얼굴 추적 시작
         startTracking();
 
         // WebRTC 연결
         connect();
 
-        return () => {
+        // 페이지 이탈 시 cleanup (브라우저 닫기/새로고침)
+        const handleBeforeUnload = () => {
             stopTracking();
             disconnect();
         };
-    }, [startTracking, stopTracking, connect, disconnect]);
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            // React Strict Mode에서는 cleanup 하지 않음
+            // 실제 페이지 이탈은 handleLeave 또는 beforeunload에서 처리
+        };
+    }, []); // 빈 의존성 - eslint-disable-line
 
     /**
      * @brief 파라미터 주기적 전송
