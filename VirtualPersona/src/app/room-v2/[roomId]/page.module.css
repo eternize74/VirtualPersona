@@ -219,16 +219,71 @@
     white-space: nowrap;
 }
 
-.emotionBadge {
+.statusBadges {
     position: absolute;
     top: -10px;
     right: -10px;
+    display: flex;
+    gap: 4px;
+}
+
+.emotionBadge {
     padding: 4px 10px;
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
     border-radius: 12px;
     font-size: 0.7rem;
     color: white;
+}
+
+.gestureBadge {
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: white;
     animation: pulse 2s infinite;
+}
+
+.handToggle {
+    padding: var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.handToggle:hover,
+.handToggle.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3));
+    border-color: #10b981;
+}
+
+.peerGesture {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.9));
+    border-radius: 16px;
+    font-size: 1.5rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: gestureIn 0.3s ease;
+}
+
+@keyframes gestureIn {
+    from {
+        transform: translateX(-50%) scale(0.5);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+    }
 }
 
 @keyframes pulse {

@@ -264,6 +264,44 @@
     color: white;
 }
 
+.handToggle {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    border-radius: var(--radius-md);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.handToggle:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3));
+    transform: translateY(-2px);
+}
+
+.handToggle.active {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-color: #10b981;
+}
+
+.handBadge {
+    padding: 2px 8px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    color: white;
+}
+
+.gestureBadge {
+    padding: 2px 8px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    color: white;
+    text-transform: capitalize;
+}
+
 @keyframes pulse {
 
     0%,

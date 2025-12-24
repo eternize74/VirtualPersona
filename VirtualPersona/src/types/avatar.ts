@@ -26,6 +26,9 @@ export interface AvatarParams {
 
     /** @brief 타임스탬프 (ms) */
     timestamp: number;
+
+    /** @brief 손 제스처 (Phase 2, 선택적) */
+    gesture?: string | null;
 }
 
 /**

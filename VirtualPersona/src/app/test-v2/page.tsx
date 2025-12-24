@@ -1,18 +1,20 @@
 /**
  * @file page.tsx
  * @brief Phase 2 테스트 페이지
- * @description 커스터마이징, 감정 프리셋 등 Phase 2 기능을 테스트합니다.
+ * @description 커스터마이징, 감정 프리셋, 손 추적 등 Phase 2 기능을 테스트합니다.
  */
 
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useFaceTracking } from '@/hooks/useFaceTracking';
+import { useHandTracking } from '@/hooks/useHandTracking';
 import { AvatarParams } from '@/types/avatar';
 import { AvatarCustomization, DEFAULT_CUSTOMIZATION } from '@/types/avatarV2';
 import AvatarRendererV2 from '@/components/AvatarRendererV2';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
 import EmotionPresets from '@/components/EmotionPresets';
+import HandsOverlay from '@/components/HandsOverlay';
 import styles from './page.module.css';
 
 /**
@@ -21,7 +23,9 @@ import styles from './page.module.css';
  */
 export default function TestPageV2() {
     const videoContainerRef = useRef<HTMLDivElement>(null);
+    const videoElementRef = useRef<HTMLVideoElement | null>(null);
     const [showCustomizer, setShowCustomizer] = useState(false);
+    const [handTrackingEnabled, setHandTrackingEnabled] = useState(false);
     const [customization, setCustomization] = useState<AvatarCustomization>(DEFAULT_CUSTOMIZATION);
     const [overrideParams, setOverrideParams] = useState<AvatarParams | null>(null);
 
@@ -33,6 +37,16 @@ export default function TestPageV2() {
         stopTracking,
         setVideoElement,
     } = useFaceTracking();
+
+    // 손 추적 훅
+    const {
+        isTracking: isHandTracking,
+        handParams,
+        error: handError,
+    } = useHandTracking({
+        videoElement: videoElementRef.current,
+        enabled: handTrackingEnabled,
+    });
 
     const hasStartedRef = useRef(false);
 
@@ -87,6 +101,12 @@ export default function TestPageV2() {
                 </div>
                 <div className={styles.headerActions}>
                     <button
+                        className={`${styles.handToggle} ${handTrackingEnabled ? styles.active : ''}`}
+                        onClick={() => setHandTrackingEnabled(!handTrackingEnabled)}
+                    >
+                        🖐️ 손 추적
+                    </button>
+                    <button
                         className={`${styles.customizerToggle} ${showCustomizer ? styles.active : ''}`}
                         onClick={() => setShowCustomizer(!showCustomizer)}
                     >
@@ -101,12 +121,24 @@ export default function TestPageV2() {
                     <h2>📹 카메라 입력</h2>
                     <div className={styles.videoContainer} ref={videoContainerRef}>
                         <video
-                            ref={(el) => setVideoElement(el)}
+                            ref={(el) => {
+                                videoElementRef.current = el;
+                                setVideoElement(el);
+                            }}
                             className={styles.video}
                             playsInline
                             muted
                             autoPlay
                         />
+                        {/* 손 랜드마크 오버레이 */}
+                        {handTrackingEnabled && videoContainerRef.current && (
+                            <HandsOverlay
+                                handParams={handParams}
+                                width={videoContainerRef.current.offsetWidth}
+                                height={videoContainerRef.current.offsetHeight}
+                                mirror={true}
+                            />
+                        )}
                         {!isTracking && (
                             <div className={styles.overlay}>
                                 {error || '카메라 연결 중...'}
@@ -216,16 +248,20 @@ export default function TestPageV2() {
             </section>
 
             {/* 에러 표시 */}
-            {error && (
-                <div className={styles.errorBanner}>
-                    ⚠️ {error}
-                </div>
-            )}
+            {
+                error && (
+                    <div className={styles.errorBanner}>
+                        ⚠️ {error}
+                    </div>
+                )
+            }
 
             {/* 상태 표시 */}
             <div className={styles.status}>
                 <div className={`${styles.statusDot} ${isTracking ? styles.active : ''}`} />
-                <span>{isTracking ? '추적 중' : '대기 중'}</span>
+                <span>{isTracking ? '얼굴 추적 중' : '대기 중'}</span>
+                {isHandTracking && <span className={styles.handBadge}>🖐️ 손 추적</span>}
+                {handParams.gesture && <span className={styles.gestureBadge}>{handParams.gesture}</span>}
                 {overrideParams && <span className={styles.emotionBadge}>감정 활성</span>}
             </div>
 
@@ -234,6 +270,6 @@ export default function TestPageV2() {
                 <a href="/test" className={styles.navLink}>← Phase 1 테스트</a>
                 <a href="/" className={styles.navLink}>🏠 홈</a>
             </div>
-        </div>
+        </div >
     );
 }

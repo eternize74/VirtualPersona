@@ -16,41 +16,45 @@
 ### 4. 테스트 페이지 V2
 - [x] `/test-v2/page.tsx` 생성
 - [x] `/test-v2/page.module.css` 생성
+- [x] 손 추적 토글 버튼 추가
 
 ### 5. 확장 렌더러
 - [x] `AvatarRendererV2.tsx` 생성
 
 ### 6. 메인 채팅창 Phase 2
 - [x] `/home-v2/page.tsx` 생성
-- [x] `/home-v2/page.module.css` 생성
 - [x] `/room-v2/[roomId]/page.tsx` 생성
-- [x] `/room-v2/[roomId]/page.module.css` 생성
 
-### 7. 손 추적 (후순위)
-- [ ] `useHandTracking.ts` 생성
-- [ ] `HandsOverlay.tsx` 생성
+### 7. 손 추적 ✅ 완료
+- [x] `useHandTracking.ts` 생성
+- [x] `HandsOverlay.tsx` 생성
+- [x] `HandsOverlay.module.css` 생성
+- [x] test-v2 페이지에 통합
 
 ### 8. 검증
 - [ ] Phase 1 `/test`, `/room` 정상 동작 확인
-- [ ] Phase 2 `/test-v2`, `/room-v2` 기능 테스트
+- [ ] Phase 2 `/test-v2` 손 추적 테스트
 
 ---
 
-## Phase 분리 구조
+## 손 추적 기능
 
-### Phase 1 (기존)
-| 경로 | 설명 |
+### 생성된 파일
+| 파일 | 역할 |
 |------|------|
-| `/` | 홈 - 아바타 선택 |
-| `/room/[roomId]` | 통화 룸 |
-| `/test` | 로컬 테스트 |
+| `src/hooks/useHandTracking.ts` | MediaPipe Hand Landmarker 훅 |
+| `src/components/HandsOverlay.tsx` | 손 랜드마크 시각화 |
+| `src/components/HandsOverlay.module.css` | 오버레이 스타일 |
 
-### Phase 2 (신규)
-| 경로 | 설명 |
-|------|------|
-| `/home-v2` | 홈 V2 - 커스터마이징 포함 |
-| `/room-v2/[roomId]` | 통화 룸 V2 - 감정 프리셋 포함 |
-| `/test-v2` | Phase 2 테스트 |
+### 기능
+- 21개 손 랜드마크 추적
+- 양손 동시 감지
+- 제스처 인식 (5종):
+  - 👍 thumbsUp (엄지척)
+  - ✌️ peace (피스)
+  - 👆 point (가리키기)
+  - ✊ fist (주먹)
+  - 🖐️ open (손 펴기)
 
 ---
 
@@ -61,18 +65,8 @@ cd VirtualPersona
 npm run dev:all
 ```
 
-### Phase 1 테스트
-- 홈: http://localhost:3000
-- 테스트: http://localhost:3000/test
-- 룸: http://localhost:3000/room/xxx
-
-### Phase 2 테스트
-- 홈 V2: http://localhost:3000/home-v2
-- 테스트 V2: http://localhost:3000/test-v2
-- 룸 V2: http://localhost:3000/room-v2/xxx
-
-### Phase 2 기능 확인
-1. 🎨 커스터마이징: 색상, 스타일 변경
-2. 😊 감정 프리셋: 버튼 클릭 또는 1-6 키
-3. 📹 카메라로 돌아가기: ESC 키 또는 버튼
-4. 💾 설정 저장: localStorage 자동 저장
+### Phase 2 손 추적 테스트
+1. http://localhost:3000/test-v2 접속
+2. "🖐️ 손 추적" 버튼 클릭하여 활성화
+3. 카메라에 손 보이기
+4. 손 랜드마크 오버레이 및 제스처 인식 확인

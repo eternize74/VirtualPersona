@@ -1,17 +1,18 @@
 /**
  * @file page.tsx
  * @brief Phase 2 통화 룸 페이지
- * @description 커스터마이징, 감정 프리셋 기능이 포함된 1:1 아바타 화상채팅 화면입니다.
+ * @description 커스터마이징, 감정 프리셋, 손 추적 기능이 포함된 1:1 아바타 화상채팅 화면입니다.
  */
 
 'use client';
 
-import { useEffect, useCallback, useRef, useState } from 'react';
+import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useFaceTracking } from '@/hooks/useFaceTracking';
+import { useHandTracking } from '@/hooks/useHandTracking';
 import { useWebRTC } from '@/hooks/useWebRTC';
 import { AvatarParams } from '@/types/avatar';
-import { AvatarCustomization, DEFAULT_CUSTOMIZATION } from '@/types/avatarV2';
+import { AvatarCustomization, DEFAULT_CUSTOMIZATION, HandGesture } from '@/types/avatarV2';
 import AvatarRendererV2 from '@/components/AvatarRendererV2';
 import AvatarCustomizer from '@/components/AvatarCustomizer';
 import EmotionPresets from '@/components/EmotionPresets';
@@ -20,7 +21,6 @@ import styles from './page.module.css';
 
 /**
  * @brief 시그널링 서버 URL
- * @description 개발 환경에서는 로컬 서버 사용
  */
 const SIGNALING_URL = process.env.NEXT_PUBLIC_SIGNALING_URL || 'ws://localhost:3001';
 
@@ -30,8 +30,20 @@ const SIGNALING_URL = process.env.NEXT_PUBLIC_SIGNALING_URL || 'ws://localhost:3
 const SEND_INTERVAL = 33; // ~30Hz
 
 /**
+ * @brief 제스처 아이콘 매핑
+ */
+const GESTURE_ICONS: Record<string, string> = {
+    fist: '✊',
+    open: '🖐️',
+    point: '👆',
+    thumbsUp: '👍',
+    thumbsDown: '👎',
+    peace: '✌️',
+    love: '🤟',
+};
+
+/**
  * @brief Phase 2 통화 룸 페이지 컴포넌트
- * @returns 통화 화면 UI (Phase 2)
  */
 export default function RoomPageV2() {
     const params = useParams();
@@ -42,7 +54,9 @@ export default function RoomPageV2() {
     const myAvatarId = searchParams.get('avatar') || 'avatar1';
 
     const sendIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const videoElementRef = useRef<HTMLVideoElement | null>(null);
     const [showCustomizer, setShowCustomizer] = useState(false);
+    const [handTrackingEnabled, setHandTrackingEnabled] = useState(false);
     const [customization, setCustomization] = useState<AvatarCustomization>(DEFAULT_CUSTOMIZATION);
     const [overrideParams, setOverrideParams] = useState<AvatarParams | null>(null);
 
@@ -55,6 +69,16 @@ export default function RoomPageV2() {
         stopTracking,
         setVideoElement,
     } = useFaceTracking();
+
+    // 손 추적 훅
+    const {
+        isTracking: isHandTracking,
+        handParams,
+        error: handError,
+    } = useHandTracking({
+        videoElement: videoElementRef.current,
+        enabled: handTrackingEnabled,
+    });
 
     // WebRTC 훅
     const {
@@ -73,8 +97,14 @@ export default function RoomPageV2() {
 
     const hasInitializedRef = useRef(false);
 
-    // 실제 표시할 파라미터 (감정 프리셋 오버라이드)
-    const displayParams = overrideParams || faceParams;
+    // 실제 표시할 파라미터 (감정 프리셋 오버라이드 + 제스처 추가)
+    const displayParams = useMemo(() => {
+        const baseParams = overrideParams || faceParams;
+        return {
+            ...baseParams,
+            gesture: handParams.gesture,
+        };
+    }, [overrideParams, faceParams, handParams.gesture]);
 
     /**
      * @brief 초기화 및 연결 (한 번만 실행)
@@ -114,12 +144,11 @@ export default function RoomPageV2() {
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     /**
-     * @brief 파라미터 주기적 전송
+     * @brief 파라미터 주기적 전송 (제스처 포함)
      */
     useEffect(() => {
         if (connectionState === 'connected') {
             sendIntervalRef.current = setInterval(() => {
-                // 감정 프리셋이 활성화되어 있으면 오버라이드된 파라미터 전송
                 sendParams(displayParams);
             }, SEND_INTERVAL);
         }
@@ -186,8 +215,16 @@ export default function RoomPageV2() {
                 </div>
                 <div className={styles.headerActions}>
                     <button
+                        className={`${styles.handToggle} ${handTrackingEnabled ? styles.active : ''}`}
+                        onClick={() => setHandTrackingEnabled(!handTrackingEnabled)}
+                        title="손 추적"
+                    >
+                        🖐️
+                    </button>
+                    <button
                         className={`${styles.customizerBtn} ${showCustomizer ? styles.active : ''}`}
                         onClick={() => setShowCustomizer(!showCustomizer)}
+                        title="커스터마이징"
                     >
                         🎨
                     </button>
@@ -200,7 +237,10 @@ export default function RoomPageV2() {
 
             {/* Video Container (숨김) */}
             <video
-                ref={(el) => setVideoElement(el)}
+                ref={(el) => {
+                    videoElementRef.current = el;
+                    setVideoElement(el);
+                }}
                 className={styles.hiddenVideo}
                 playsInline
                 muted
@@ -214,13 +254,21 @@ export default function RoomPageV2() {
                         <div className={styles.avatarLabel}>상대방</div>
                         <div className={styles.avatarWrapper}>
                             {connectionState === 'connected' ? (
-                                <AvatarRendererV2
-                                    avatarId={peerAvatarId}
-                                    params={peerParams}
-                                    customization={customization}
-                                    width={400}
-                                    height={400}
-                                />
+                                <>
+                                    <AvatarRendererV2
+                                        avatarId={peerAvatarId}
+                                        params={peerParams}
+                                        customization={customization}
+                                        width={400}
+                                        height={400}
+                                    />
+                                    {/* 상대방 제스처 표시 */}
+                                    {peerParams?.gesture && (
+                                        <div className={styles.peerGesture}>
+                                            {GESTURE_ICONS[peerParams.gesture] || peerParams.gesture}
+                                        </div>
+                                    )}
+                                </>
                             ) : (
                                 <div className={styles.waitingOverlay}>
                                     <div className={styles.waitingIcon}>👤</div>
@@ -256,9 +304,17 @@ export default function RoomPageV2() {
                                 {trackingError || '카메라 초기화 중...'}
                             </div>
                         )}
-                        {overrideParams && (
-                            <div className={styles.emotionBadge}>감정 활성</div>
-                        )}
+                        {/* 상태 배지 */}
+                        <div className={styles.statusBadges}>
+                            {overrideParams && (
+                                <div className={styles.emotionBadge}>😊 감정</div>
+                            )}
+                            {isHandTracking && handParams.gesture && (
+                                <div className={styles.gestureBadge}>
+                                    {GESTURE_ICONS[handParams.gesture] || handParams.gesture}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* 감정 프리셋 */}
@@ -284,14 +340,14 @@ export default function RoomPageV2() {
             )}
 
             {/* Error Display */}
-            {(trackingError || rtcError) && (
+            {(trackingError || rtcError || handError) && (
                 <div className={styles.errorBanner}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
-                    <span>{trackingError || rtcError}</span>
+                    <span>{trackingError || rtcError || handError}</span>
                 </div>
             )}
         </div>
