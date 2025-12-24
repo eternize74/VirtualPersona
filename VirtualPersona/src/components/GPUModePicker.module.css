@@ -1,0 +1,193 @@
+/**
+ * @file GPUModePicker.module.css
+ * @brief GPU 모드 선택 UI 스타일
+ */
+
+.container {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.container.compact {
+    padding: 12px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+}
+
+.loading {
+    font-size: 12px;
+    color: #fbbf24;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.modeList {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.compact .modeList {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.modeButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.compact .modeButton {
+    padding: 8px 4px;
+}
+
+.modeButton:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modeButton.active {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: #6366f1;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+}
+
+.modeButton.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.modeIcon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+.compact .modeIcon {
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+.modeName {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.compact .modeName {
+    font-size: 10px;
+}
+
+.recommended {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 8px;
+    background: #10b981;
+    color: white;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.unsupported {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 8px;
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.gpuInfo {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.infoRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 4px;
+}
+
+.infoLabel {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.infoValue {
+    color: white;
+    max-width: 70%;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fallbackInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #fbbf24;
+    padding: 8px;
+    background: rgba(251, 191, 36, 0.1);
+    border-radius: 6px;
+}
+
+.warningIcon {
+    font-size: 14px;
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #ef4444;
+    margin-top: 12px;
+    padding: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+}
+
+.errorIcon {
+    font-size: 14px;
+}
