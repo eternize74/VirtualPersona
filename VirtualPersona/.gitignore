@@ -3,6 +3,11 @@ node_modules/
 .pnp
 .pnp.js
 
+# Models Data
+*.onnx
+*.pt
+*.bin
+
 # Testing
 coverage/
 

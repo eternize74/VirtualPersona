@@ -255,6 +255,15 @@ export function useFaceTracking() {
         setIsTracking(true);
 
         let lastTime = performance.now();
+        let lastParams: AvatarParams = DEFAULT_AVATAR_PARAMS;
+        const TARGET_FPS = 15; // 15Hz로 낮춤 (배터리/성능)
+        const FRAME_INTERVAL = 1000 / TARGET_FPS;
+        const SMOOTHING = 0.3; // 보간 계수 (0.3 = 30% 새 값, 70% 이전 값)
+
+        /**
+         * @brief 파라미터 보간 (부드러운 전환)
+         */
+        const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
         const detect = () => {
             const video = videoRef.current;
@@ -263,15 +272,15 @@ export function useFaceTracking() {
             if (video && landmarker && video.readyState >= 2) {
                 const now = performance.now();
 
-                // 30Hz로 제한 (최소 33ms 간격)
-                if (now - lastTime >= 33) {
+                // 타겟 FPS로 제한
+                if (now - lastTime >= FRAME_INTERVAL) {
                     try {
                         const results = landmarker.detectForVideo(video, now);
 
                         if (results.faceLandmarks && results.faceLandmarks.length > 0) {
                             const landmarks = results.faceLandmarks[0];
 
-                            const newParams: AvatarParams = {
+                            const rawParams: AvatarParams = {
                                 headRotation: calculateHeadPose(landmarks),
                                 eyeBlinkLeft: calculateEyeBlink(landmarks, true),
                                 eyeBlinkRight: calculateEyeBlink(landmarks, false),
@@ -280,7 +289,22 @@ export function useFaceTracking() {
                                 timestamp: Date.now(),
                             };
 
-                            setParams(newParams);
+                            // 보간 적용 (부드러운 움직임)
+                            const smoothedParams: AvatarParams = {
+                                headRotation: [
+                                    lerp(lastParams.headRotation[0], rawParams.headRotation[0], SMOOTHING),
+                                    lerp(lastParams.headRotation[1], rawParams.headRotation[1], SMOOTHING),
+                                    lerp(lastParams.headRotation[2], rawParams.headRotation[2], SMOOTHING),
+                                ],
+                                eyeBlinkLeft: lerp(lastParams.eyeBlinkLeft, rawParams.eyeBlinkLeft, SMOOTHING),
+                                eyeBlinkRight: lerp(lastParams.eyeBlinkRight, rawParams.eyeBlinkRight, SMOOTHING),
+                                mouthOpen: lerp(lastParams.mouthOpen, rawParams.mouthOpen, SMOOTHING),
+                                smile: lerp(lastParams.smile, rawParams.smile, SMOOTHING),
+                                timestamp: rawParams.timestamp,
+                            };
+
+                            lastParams = smoothedParams;
+                            setParams(smoothedParams);
                         }
                     } catch (e) {
                         // 프레임 처리 오류 무시

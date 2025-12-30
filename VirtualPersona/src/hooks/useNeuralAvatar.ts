@@ -22,6 +22,7 @@ import {
 import {
     loadLivePortraitModels,
     disposeLivePortraitModels,
+    initONNXRuntime,
     LivePortraitSessions,
     DEFAULT_MODEL_URLS,
 } from '../lib/gpu/onnx-loader';
@@ -185,6 +186,9 @@ export function useNeuralAvatar(options: UseNeuralAvatarOptions = {}): UseNeural
         }));
 
         try {
+            // ONNX Runtime 환경 초기화 (WASM 경로 설정)
+            initONNXRuntime();
+
             // 실행 제공자 설정
             const providers: ('webgpu' | 'webgl' | 'wasm')[] =
                 config.gpuMode === 'webgpu' ? ['webgpu', 'wasm'] :
@@ -200,6 +204,11 @@ export function useNeuralAvatar(options: UseNeuralAvatarOptions = {}): UseNeural
 
             sessionsRef.current = sessions;
 
+            // 모델 정보 로깅
+            import('../lib/gpu/liveportrait-pipeline').then(({ logAllModelInfo }) => {
+                logAllModelInfo(sessions);
+            });
+
             // 웜업 추론
             if (warmup) {
                 setState(prev => ({ ...prev, modelStatus: 'warming_up' }));
@@ -211,9 +220,8 @@ export function useNeuralAvatar(options: UseNeuralAvatarOptions = {}): UseNeural
                     bytesTotal: 0,
                 });
 
-                // 더미 추론으로 JIT 컴파일 트리거
-                // 실제 구현에서는 각 모델에 맞는 더미 입력 사용
-                console.log('[NeuralAvatar] Warmup complete');
+                // 모델 정보만 확인 (실제 추론은 아직 미구현)
+                console.log('[NeuralAvatar] Warmup complete - models ready');
             }
 
             setState(prev => ({
@@ -309,11 +317,10 @@ export function useNeuralAvatar(options: UseNeuralAvatarOptions = {}): UseNeural
                 // });
             }
 
-            // 5. Warping/Generation
-            if (sessions.generatorWarping) {
-                // const warpResult = await sessions.generatorWarping.run({
-                //     appearance: appearanceFeatures,
-                //     motion: motionFeatures
+            // 5. Landmark 처리
+            if (sessions.landmark) {
+                // const landmarkResult = await sessions.landmark.run({
+                //     input: imageTensor
                 // });
             }
 

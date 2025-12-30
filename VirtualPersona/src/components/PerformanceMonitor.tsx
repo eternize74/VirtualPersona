@@ -103,31 +103,34 @@ export function PerformanceMonitor({
         const delta = now - lastFrameTimeRef.current;
         lastFrameTimeRef.current = now;
 
-        // 최근 60 프레임의 시간 저장
+        // 최근 30 프레임의 시간 저장 (줄임)
         frameTimesRef.current.push(delta);
-        if (frameTimesRef.current.length > 60) {
+        if (frameTimesRef.current.length > 30) {
             frameTimesRef.current.shift();
         }
 
-        // 평균 FPS 계산
-        if (frameTimesRef.current.length > 0) {
-            const avgFrameTime =
-                frameTimesRef.current.reduce((a, b) => a + b, 0) / frameTimesRef.current.length;
-            const fps = Math.round(1000 / avgFrameTime);
+        // 500ms마다 UI 업데이트 (성능 최적화)
+        if (frameTimesRef.current.length % 15 === 0) {
+            // 평균 FPS 계산
+            if (frameTimesRef.current.length > 0) {
+                const avgFrameTime =
+                    frameTimesRef.current.reduce((a, b) => a + b, 0) / frameTimesRef.current.length;
+                const fps = Math.round(1000 / avgFrameTime);
 
-            // 경고 감지
-            const warnings: PerformanceWarning[] = [];
-            if (fps < targetFPS * 0.5) {
-                warnings.push('low_fps');
+                // 경고 감지
+                const warnings: PerformanceWarning[] = [];
+                if (fps < targetFPS * 0.5) {
+                    warnings.push('low_fps');
+                }
+
+                setMetrics(prev => ({
+                    ...prev,
+                    fps,
+                    totalFrameTime: avgFrameTime,
+                    warnings,
+                    ...(externalMetrics || {}),
+                }));
             }
-
-            setMetrics(prev => ({
-                ...prev,
-                fps,
-                totalFrameTime: avgFrameTime,
-                warnings,
-                ...(externalMetrics || {}),
-            }));
         }
 
         rafIdRef.current = requestAnimationFrame(updateFPS);

@@ -1,3 +1,19 @@
+# Python
+inference-server/__pycache__/
+inference-server/venv/
+
+# Models Data
+*.onnx
+*.pt
+*.bin
+inference-server/checkpoints/
+inference-server/FasterLivePortrait/
+
+# Dynamic Library
+*.dll
+*.so
+*.dylib
+
 # Logs
 logs
 *.log

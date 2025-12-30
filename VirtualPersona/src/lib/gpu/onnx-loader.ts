@@ -7,21 +7,39 @@
 import * as ort from 'onnxruntime-web';
 import { ModelLoadingProgress, ModelLoadingStatus } from '../../types/avatarV3';
 
-// WebGPU 백엔드 활성화 (지원되는 경우)
-// ort.env.wasm.numThreads = 4;
+/**
+ * @brief ONNX Runtime 환경 초기화
+ * @description WASM 파일 경로 설정 및 스레드 수 설정
+ */
+export function initONNXRuntime(): void {
+    // WASM 파일 경로를 CDN에서 로드하도록 설정
+    ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.0/dist/';
+
+    // 멀티스레드 비활성화 (브라우저 호환성)
+    ort.env.wasm.numThreads = 1;
+
+    // SIMD 활성화 (지원되는 경우)
+    ort.env.wasm.simd = true;
+
+    console.log('[ONNX] Runtime initialized with CDN WASM paths');
+}
 
 /**
  * @brief LivePortrait 모델 파일 정보
  */
 export interface LivePortraitModelFiles {
-    /** @brief Appearance Feature Extractor 모델 URL */
+    /** @brief Appearance Feature Extractor 모델 */
     appearanceExtractor: string;
-    /** @brief Motion Extractor 모델 URL */
+    /** @brief Motion Extractor 모델 */
     motionExtractor: string;
-    /** @brief Generator/Warping 모델 URL */
-    generatorWarping: string;
-    /** @brief Stitching/Retargeting 모델 URL */
-    stitchingRetargeting: string;
+    /** @brief Landmark 모델 */
+    landmark: string;
+    /** @brief Stitching 모델 */
+    stitching: string;
+    /** @brief Stitching Eye 모델 */
+    stitchingEye: string;
+    /** @brief Stitching Lip 모델 */
+    stitchingLip: string;
 }
 
 /**
@@ -30,8 +48,10 @@ export interface LivePortraitModelFiles {
 export interface LivePortraitSessions {
     appearanceExtractor: ort.InferenceSession | null;
     motionExtractor: ort.InferenceSession | null;
-    generatorWarping: ort.InferenceSession | null;
-    stitchingRetargeting: ort.InferenceSession | null;
+    landmark: ort.InferenceSession | null;
+    stitching: ort.InferenceSession | null;
+    stitchingEye: ort.InferenceSession | null;
+    stitchingLip: ort.InferenceSession | null;
 }
 
 /**
@@ -49,24 +69,27 @@ export interface ModelLoaderConfig {
 }
 
 /**
- * @brief 기본 모델 URL (CDN 호스팅 필요)
- * @note 실제 배포 시 CDN URL로 교체해야 함
+ * @brief 기본 모델 URL (public/models/liveportrait/ 폴더)
  */
 export const DEFAULT_MODEL_URLS: LivePortraitModelFiles = {
     appearanceExtractor: '/models/liveportrait/appearance_feature_extractor.onnx',
     motionExtractor: '/models/liveportrait/motion_extractor.onnx',
-    generatorWarping: '/models/liveportrait/generator_warping.onnx',
-    stitchingRetargeting: '/models/liveportrait/stitching_retargeting.onnx',
+    landmark: '/models/liveportrait/landmark.onnx',
+    stitching: '/models/liveportrait/stitching.onnx',
+    stitchingEye: '/models/liveportrait/stitching_eye.onnx',
+    stitchingLip: '/models/liveportrait/stitching_lip.onnx',
 };
 
 /**
- * @brief 모델 크기 정보 (예상치, 바이트)
+ * @brief 모델 크기 정보 (실제 파일 크기, 바이트)
  */
 const MODEL_SIZES: Record<keyof LivePortraitModelFiles, number> = {
-    appearanceExtractor: 50 * 1024 * 1024,  // ~50MB
-    motionExtractor: 40 * 1024 * 1024,       // ~40MB
-    generatorWarping: 80 * 1024 * 1024,      // ~80MB
-    stitchingRetargeting: 30 * 1024 * 1024,  // ~30MB
+    appearanceExtractor: 3355896,    // ~3.4MB
+    motionExtractor: 112648514,      // ~113MB
+    landmark: 114666491,             // ~115MB
+    stitching: 182363,               // ~182KB
+    stitchingEye: 580926,            // ~581KB
+    stitchingLip: 150609,            // ~151KB
 };
 
 /**
@@ -184,13 +207,14 @@ export async function loadONNXModel(
         modelData = await downloadModel(url, onProgress);
     }
 
-    // ONNX 세션 생성
+    // ONNX 세션 생성 (wasm만 사용 - 브라우저 호환성)
+    // Note: webgpu/webgl은 onnxruntime-web 빌드에 따라 지원되지 않을 수 있음
     const session = await ort.InferenceSession.create(modelData, {
-        executionProviders: executionProviders,
+        executionProviders: ['wasm'],
         graphOptimizationLevel: 'all',
     });
 
-    console.log(`[ONNX] ${modelName} session created`);
+    console.log(`[ONNX] ${modelName} session created with WASM backend`);
     return session;
 }
 
@@ -262,8 +286,10 @@ export async function loadLivePortraitModels(
     const sessions: LivePortraitSessions = {
         appearanceExtractor: null,
         motionExtractor: null,
-        generatorWarping: null,
-        stitchingRetargeting: null,
+        landmark: null,
+        stitching: null,
+        stitchingEye: null,
+        stitchingLip: null,
     };
 
     const modelKeys = Object.keys(modelFiles) as (keyof LivePortraitModelFiles)[];
